@@ -49,3 +49,13 @@ DEVICE_PACKAGE_OVERLAYS += $(DEVICE_PATH)/overlay
 ifeq ($(WITH_GMS),true)
 $(call inherit-product-if-exists, vendor/gapps/arm64/arm64-vendor.mk)
 endif
+
+# VoLTE userspace. PhhIms source is packages/apps/PhhIms.
+# LTE band picker defaults to auto and applies a band only when the user picks one.
+PRODUCT_PACKAGES += \
+    PhhIms \
+    BandPref
+
+PRODUCT_COPY_FILES += \
+    $(DEVICE_PATH)/configs/permissions/privapp-permissions-me.phh.ims.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/privapp-permissions-me.phh.ims.xml \
+    $(DEVICE_PATH)/configs/permissions/privapp-permissions-com.m14x.bandpref.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/privapp-permissions-com.m14x.bandpref.xml

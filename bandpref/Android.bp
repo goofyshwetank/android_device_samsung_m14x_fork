@@ -1,0 +1,8 @@
+android_app {
+    name: "BandPref",
+    srcs: ["src/**/*.java"],
+    manifest: "AndroidManifest.xml",
+    certificate: "platform",
+    privileged: true,
+    platform_apis: true,
+}
