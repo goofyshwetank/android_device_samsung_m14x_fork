@@ -59,3 +59,5 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/configs/permissions/privapp-permissions-me.phh.ims.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/privapp-permissions-me.phh.ims.xml \
     $(DEVICE_PATH)/configs/permissions/privapp-permissions-com.m14x.bandpref.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/privapp-permissions-com.m14x.bandpref.xml
+
+PRODUCT_SOONG_NAMESPACES += $(DEVICE_PATH)
