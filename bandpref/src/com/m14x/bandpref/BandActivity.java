@@ -15,31 +15,69 @@ public class BandActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        pickSlot();
+        showMainMenu();
     }
 
-    private void pickSlot() {
+    private void showMainMenu() {
         SubscriptionManager sm = getSystemService(SubscriptionManager.class);
         List<SubscriptionInfo> subs = (sm != null) ? sm.getActiveSubscriptionInfoList() : null;
 
-        String[] slots = new String[]{"SIM 1", "SIM 2"};
+        String name1 = "SIM 1";
+        String name2 = "SIM 2";
         if (subs != null) {
             for (SubscriptionInfo si : subs) {
                 int idx = si.getSimSlotIndex();
-                if (idx >= 0 && idx < 2) {
-                    slots[idx] = "SIM " + (idx + 1) + " (" + si.getDisplayName() + ")";
-                }
+                if (idx == 0) name1 = "SIM 1 (" + si.getDisplayName() + ")";
+                else if (idx == 1) name2 = "SIM 2 (" + si.getDisplayName() + ")";
             }
         }
+        final String finalSim1 = name1;
+        final String finalSim2 = name2;
+
+        final boolean gameMode = BandLock.isTouchGameMode(this);
+        final boolean gloveMode = BandLock.isTouchGloveMode(this);
+
+        String[] menuItems = new String[]{
+                finalSim1 + " [Band Lock]",
+                finalSim2 + " [Band Lock]",
+                "Touch Polling Rate: " + (gameMode ? "MAX (Game Mode ON)" : "Standard (OFF)"),
+                "High Touch Sensitivity: " + (gloveMode ? "ON (Glove Mode)" : "Standard (OFF)")
+        };
 
         new AlertDialog.Builder(this)
-                .setTitle("Select SIM")
-                .setItems(slots, (dialog, which) -> {
-                    selectedSlot = which;
-                    pickBandForSlot(slots[which]);
+                .setTitle("Hardware Controls")
+                .setItems(menuItems, (dialog, which) -> {
+                    switch (which) {
+                        case 0:
+                            selectedSlot = 0;
+                            pickBandForSlot(finalSim1);
+                            break;
+                        case 1:
+                            selectedSlot = 1;
+                            pickBandForSlot(finalSim2);
+                            break;
+                        case 2:
+                            toggleGameMode(!gameMode);
+                            break;
+                        case 3:
+                            toggleGloveMode(!gloveMode);
+                            break;
+                    }
                 })
                 .setOnCancelListener(dialog -> finish())
                 .show();
+    }
+
+    private void toggleGameMode(boolean enable) {
+        BandLock.setTouchGameMode(this, enable);
+        Toast.makeText(this, "Touch Polling Rate: " + (enable ? "MAX (Game Mode 240Hz+)" : "Standard"), Toast.LENGTH_SHORT).show();
+        finish();
+    }
+
+    private void toggleGloveMode(boolean enable) {
+        BandLock.setTouchGloveMode(this, enable);
+        Toast.makeText(this, "Touch Sensitivity: " + (enable ? "High (Glove Mode)" : "Standard"), Toast.LENGTH_SHORT).show();
+        finish();
     }
 
     private void pickBandForSlot(String slotTitle) {
