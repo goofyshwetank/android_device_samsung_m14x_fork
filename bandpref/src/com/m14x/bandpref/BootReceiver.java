@@ -8,8 +8,8 @@ public class BootReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         try {
-            BandLock.apply(context, BandLock.saved(context));
-        } catch (RuntimeException ignored) {
+            BandLock.applyAll(context);
+        } catch (Throwable ignored) {
         }
     }
 }

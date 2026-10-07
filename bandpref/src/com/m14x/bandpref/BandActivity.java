@@ -3,30 +3,69 @@ package com.m14x.bandpref;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
 import android.widget.Toast;
 
+import java.util.List;
+
 public class BandActivity extends Activity {
+    private int selectedSlot = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        String current = BandLock.saved(this);
-        String[] items = new String[BandLock.BANDS.length + 1];
-        items[0] = "Auto";
-        int checked = 0;
-        for (int i = 0; i < BandLock.BANDS.length; i++) {
-            items[i + 1] = "LTE B" + BandLock.BANDS[i];
-            if (Integer.toString(BandLock.BANDS[i]).equals(current)) checked = i + 1;
+        pickSlot();
+    }
+
+    private void pickSlot() {
+        SubscriptionManager sm = getSystemService(SubscriptionManager.class);
+        List<SubscriptionInfo> subs = (sm != null) ? sm.getActiveSubscriptionInfoList() : null;
+
+        String[] slots = new String[]{"SIM 1", "SIM 2"};
+        if (subs != null) {
+            for (SubscriptionInfo si : subs) {
+                int idx = si.getSimSlotIndex();
+                if (idx >= 0 && idx < 2) {
+                    slots[idx] = "SIM " + (idx + 1) + " (" + si.getDisplayName() + ")";
+                }
+            }
         }
+
         new AlertDialog.Builder(this)
-                .setTitle("LTE band")
-                .setSingleChoiceItems(items, checked, (dialog, which) -> {
-                    String value = which == 0 ? "auto" : Integer.toString(BandLock.BANDS[which - 1]);
+                .setTitle("Select SIM")
+                .setItems(slots, (dialog, which) -> {
+                    selectedSlot = which;
+                    pickBandForSlot(slots[which]);
+                })
+                .setOnCancelListener(dialog -> finish())
+                .show();
+    }
+
+    private void pickBandForSlot(String slotTitle) {
+        List<BandLock.BandItem> items = BandLock.buildItems();
+        String current = BandLock.saved(this, selectedSlot);
+
+        String[] labels = new String[items.size()];
+        int checked = 0;
+        for (int i = 0; i < items.size(); i++) {
+            BandLock.BandItem item = items.get(i);
+            labels[i] = item.label;
+            if (item.value.equals(current)) {
+                checked = i;
+            }
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle(slotTitle + " Band")
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    String value = items.get(which).value;
                     try {
-                        BandLock.save(this, value);
-                        BandLock.apply(this, value);
-                        Toast.makeText(this, which == 0 ? "LTE auto" : items[which], Toast.LENGTH_SHORT).show();
-                    } catch (RuntimeException e) {
-                        Toast.makeText(this, "Band change failed", Toast.LENGTH_LONG).show();
+                        BandLock.save(this, selectedSlot, value);
+                        BandLock.applyForSlot(this, selectedSlot, value);
+                        Toast.makeText(this, slotTitle + ": " + labels[which], Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Toast.makeText(this, "Band lock failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     }
                     dialog.dismiss();
                     finish();
